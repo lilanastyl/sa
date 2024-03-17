@@ -1,29 +1,30 @@
-import telebot
-from telebot import types
-from telebot.async_telebot import AsyncTeleBot
-import random
-import string
+from telebot.types import User, Message
 
-class Group:
-    def __init__(self, name):
-        self.name = name
-        self.code = self.generate_code()
-        self.watchers = []
-        self.players = []
+class Game():
+    def __init__(self):
+        self.game_status = False
+        self.players: list[list[User, bool]] = []
+        # self.start_message_id = None
+        # self.chat_group_id = None
     
-    def add_user(self, message):
-        self.players.append(message)
+    def add_user(self, new_user: User):
+        for user in self.players:
+            if user[0].id == new_user.id:
+                return True
+        self.players.append([new_user, False])
+    def get_users(self):
+        users_text = ""
+        for user in self.players:
+            if user[1]:
+                users_text += '✅'
+            else:
+                users_text += '❌'
+            users_text += f"  @{user[0].username}\n"
+        return users_text
     
-    def watchers_connect(self, id):
-        for message in self.players:
-            if message.id == id:
-                self.players.remove(message)
-                self.watchers.append(message)
-    
-    def delete(self, id):
-        for message in self.players:
-            if message.id == id:
-                self.players.remove(message)
-        for message in self.watchers:
-            if message.id == id:
-                self.watchers.remove(message)
+    def delete(self, user_new: User):
+        for user in self.players:
+            if user[0].id == user_new.id:
+                self.players.remove(user)
+
+games: dict[int, Game] = {}
