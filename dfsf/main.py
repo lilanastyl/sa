@@ -35,37 +35,44 @@ async def join_group_callback(call: types.CallbackQuery):
     if group.add_user(call.from_user):
         await bot.answer_callback_query(callback_query_id=call.id, text="Вы уже участвуете в игре!", show_alert=True)
         return
-    # bot.set_chat_permissions
     await bot.edit_message_text(
         f"Участники:\n{group.get_users()}",
         call.message.chat.id,
         call.message.message_id,
         reply_markup=markup_start
     )
-    # group.chat_group_id = call.message.chat.id
-    # group.start_message_id = call.message.message_id
     print(call.message.message_id, call.message.chat.id)
     await bot.send_message(call.from_user.id, "Нажми на кнопку ниже, если готов начать игру или выйти", reply_markup=markup_choose, 
                             reply_parameters=types.ReplyParameters(message_id=call.message.message_id, chat_id=call.message.chat.id))
 
+
+async def start_game(chat_id, message_id):
+    group = games[chat_id]
+    bot.edit_message_text(f'Игра начинается!\n\nУчастники:\n{group.get_users()}', chat_id, message_id)
+    bot.set_chat_permissions(chat_id, types.ChatPermissions(False))
+
+
 @bot.callback_query_handler(func=lambda call: call.data == 'choose' or call.data == 'choose_exit')
 async def choose_callback(call: types.CallbackQuery):
-    print(call.message)
-    # group = games[call.message]
-    # for user in group.players:
-    #     if user[0].id == call.from_user.id:
-    #         if call.data == 'choose':
-    #             user[1] = not user[1]
-    #         if call.data == 'choose_exit':
-    #             group.delete(call.from_user)
-    # await bot.edit_message_text(
-    #     f"Участники:\n{group.get_users()}",
-    #     call.message.reply_to_message.pinned_message.chat.id,
-    #     call.message.reply_to_message.pinned_message.message_id,
-    #     reply_markup=markup_start
-    # )
-
-    
+    group = games[call.message.external_reply.chat.id]
+    for user in group.players:
+        if user[0].id == call.from_user.id:
+            if call.data == 'choose':
+                user[1] = not user[1]
+                if len(group.players) > 3 and group.check_ready():
+                    start_game(call.message.external_reply.chat.id, call.message.external_reply.message_id)
+            if call.data == 'choose_exit':
+                group.delete(call.from_user)
+                if len(group.players) < 1:
+                    await bot.edit_message_text(messages.start, call.message.external_reply.chat.id,
+                                                call.message.external_reply.message_id, reply_markup=markup_start)
+                    return
+    await bot.edit_message_text(
+        f"Участники:\n{group.get_users()}",
+        call.message.external_reply.chat.id,
+        call.message.external_reply.message_id,
+        reply_markup=markup_start
+    )
 
 async def main():
     await bot.polling()
