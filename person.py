@@ -1,4 +1,4 @@
-
+from telebot.types import User
 import random
 
 sex = ['Чоловік', 'Жінка']
@@ -58,15 +58,16 @@ religion = ["Християнство","Іслам","Буддизм","Дудеї
 skills = ["Выращивать еду с пробирок", "Решать задачи", "Смешить людей", "Рубка дерева"]
 
 class Person():
-    def __init__(self):
+    def __init__(self, user):
+        self.user_info: User = user
+        self.choose = False
         self.sex = random.choice(sex)
-        self.age = random.choice(17, 99)
+        self.age = random.randint(17, 79)
         self.profession = random.choice(profession)
         self.illness = random.choice(illness)
         self.kids = self.setKids()
         self.phobia = random.choice(phobia)
         self.character = random.choice(character)
-        #self.addition = ' '
         self.skills = random.choice(character)
         self.religion = random.choice(religion)
         self.inventar = random.choice(inventar)
