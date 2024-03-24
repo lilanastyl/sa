@@ -6,6 +6,7 @@ from telebot.apihelper import ApiException
 import messages
 import asyncio
 
+
 bot = AsyncTeleBot('6885805301:AAGcnYkpGfciC65TDPodn6k2nyRLS3NQKlY')
 
 markup_start = types.InlineKeyboardMarkup().add(types.InlineKeyboardButton('Присоединиться', callback_data='join_group'))
@@ -13,6 +14,7 @@ markup_start1 = types.InlineKeyboardMarkup().add(types.InlineKeyboardButton('П�
                                                 types.InlineKeyboardButton('Смена готовности', callback_data='choose'), 
                                                 types.InlineKeyboardButton('Выйти', callback_data='choose_exit'),
                                                 row_width=1)
+markup_game = types.InlineKeyboardMarkup().add(types.InlineKeyboardButton('Посмотреть роль', callback_data='view_role'), row_width=1)
 
 @bot.message_handler(commands=['start'])
 async def start_message(message: types.Message):
@@ -42,10 +44,13 @@ async def join_group_callback(call: types.CallbackQuery):
 async def start_game(chat_id, message_id):
     print(chat_id, message_id)
     group = games[chat_id]
-    await bot.edit_message_text(f'Игра начинается!\n\nУчастники:\n{group.get_users()}', chat_id, message_id)
+    await bot.edit_message_text(f'Игра начинается! Нажмите на кнопку, чтобы посмотреть свою роль.\n\nУчастники:\n{group.get_users()}', 
+                                chat_id, 
+                                message_id, 
+                                reply_markup=markup_game)
     group.game_status = True
 
-@bot.callback_query_handler(func=lambda call: call.data == 'choose' or call.data == 'choose_exit')
+@bot.callback_query_handler(func=lambda call: call.data == 'choose' or call.data == 'choose_exit' or call.data == 'view_role')
 async def choose_callback(call: types.CallbackQuery):
     group = games[call.message.chat.id]
     user: Person = group.check_user(call.from_user)
@@ -54,7 +59,7 @@ async def choose_callback(call: types.CallbackQuery):
         return
     if call.data == 'choose':
         user.choose = not user.choose
-        if len(group.players) >= 2 and group.check_ready():
+        if len(group.players) >= 1 and group.check_ready():
             print(call.message.chat.id, call.message.message_id)
             await start_game(call.message.chat.id, call.message.message_id)
             return
@@ -64,6 +69,9 @@ async def choose_callback(call: types.CallbackQuery):
             await bot.edit_message_text(messages.start, call.message.chat.id,
                                         call.message.message_id, reply_markup=markup_start)
             return
+    if call.data == 'view_role':
+        await bot.answer_callback_query(call.id, user.getPerson(), True)
+        return
     await bot.edit_message_text(
         f"Участники:\n{group.get_users()}",
         call.message.chat.id,

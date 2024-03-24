@@ -72,9 +72,6 @@ class Person():
         self.religion = random.choice(religion)
         self.inventar = random.choice(inventar)
 
-
-
-
     def setKids(self):
         if self.age <= 46:
             return random.choice(kids_d_46)
@@ -87,21 +84,5 @@ class Person():
 
 
     def getPerson(self):
-        persona = """
-🚻Стать: {0}
-🎂Вік: {1}
-🔧Професія: {2}
-💟Стан здоров'я: {3}
-♿Інвалідність: {4}
-🚼Можливість мати дітей: {5}
-☀Характер: {6}
-🛐Релігія: {7}
-🙈Фобія: {8}
-⛳Хобі/вміння: {9}
-🎒Багаж: {11} 
-        """.format(self.sex, self.age, self.profession, self.illness,  self.kids, self.character,
-                   self.religion, self.phobia, self.skills, self.inventar)
-        return persona
-
-
-
+        print('🙈Фобія:{self.phobia}\n🛐Релігія:{self.religion}\n🎒Багаж{self.inventar}\n')
+        return f"🚻Стать: {self.sex}\n🎂Вік: {self.age}\n🔧Професія: {self.profession}\n💟Стан здоровя: {self.illness}\n🚼Можливість мати дітей:{self.kids}\n☀Характер: {self.character}\n⛳Хобі/вміння:{self.skills}\n"
