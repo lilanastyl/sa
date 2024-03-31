@@ -2,16 +2,13 @@ from telebot.types import User, Message
 from person import Person
 from bunker import Bunker
 
-class Game():
+class Group():
     def __init__(self):
         self.game_status = False
         self.players: list[Person] = []
         self.bunker = Bunker()
     
     def add_user(self, new_user: User):
-        for user in self.players:
-            if user.user_info.id == new_user.id:
-                return True
         self.players.append(Person(new_user))
 
     def get_users(self):
@@ -30,7 +27,7 @@ class Game():
                 return False
         return True
     
-    def check_user(self, searched_user: User):
+    def get_user(self, searched_user: User):
         for user in self.players:
             if searched_user.id == user.user_info.id:
                 return user
@@ -41,4 +38,4 @@ class Game():
             if user.user_info.id == user_new.id:
                 self.players.remove(user)
 
-games: dict[int, Game] = {}
+groups: dict[int, Group] = {}
