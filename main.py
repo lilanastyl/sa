@@ -4,7 +4,8 @@ import messages
 import asyncio
 from group import Group, groups
 from middleware import MyMiddleware, MiddlewareData
-from markups import markup_start
+from markups import markup_start, markup_game
+from threading import Timer
 
 bot = AsyncTeleBot('6885805301:AAGcnYkpGfciC65TDPodn6k2nyRLS3NQKlY')
 
@@ -16,7 +17,7 @@ async def start_message(message: types.Message):
         await bot.send_message(message.chat.id, messages.start, reply_markup=markup_start)
     except Exception as error:
         print(error)
-    
+
 @bot.message_handler(commands=['rules']) #сделать через кнопку в главном сообщении
 async def start_message(message: types.Message):
     try:
@@ -25,7 +26,18 @@ async def start_message(message: types.Message):
     except Exception as error:
         print(error)
 
-@bot.callback_query_handler()
+async def start_game(data: MiddlewareData, chat_id):
+    t = 3 
+    while t:
+        m, s = divmod(t, 60)
+        timer = f'{m:02d} минут и {s:02d} секунд'
+        await bot.send_message(chat_id, f'У вас есть {timer} для выбора участника, который покинет игру. Таймер уже тикает!')
+        await asyncio.sleep(1)
+        t -= 1
+    await bot.send_message(chat_id, 'Время вышло, начнём голосование!')
+    
+
+@bot.callback_query_handler(func=lambda call: call.data)
 async def choose_callback(call: types.CallbackQuery, data):
     try:
         data = MiddlewareData(**data)
@@ -33,10 +45,18 @@ async def choose_callback(call: types.CallbackQuery, data):
             data.group.add_user(call.from_user)
         if call.data == 'choose':
             data.user.choose = not data.user.choose
+            if len(data.group.players) >= 1 and data.group.check_ready() and not data.group.game_status:
+                await bot.edit_message_text(f'Игра начинается!\n\nУчастники:\n{data.group.get_users()}', call.message.chat.id, 
+                                                call.message.message_id)
+                await bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id, reply_markup=markup_game)
+                data.group.game_status = True
+                await start_game(data, call.message.chat.id)
         if call.data == 'choose_exit':
             data.group.delete(call.from_user)
         if call.data == 'physical_char':
-            await bot.answer_callback_query
+            await bot.answer_callback_query(call.id, data.user.getPersonPhys(), True)
+        if call.data == 'personally_char':
+            await bot.answer_callback_query(call.id, data.user.getPersonPersonally(), True)
     except Exception as error:
         print(error)
 

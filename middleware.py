@@ -3,7 +3,7 @@ from telebot.async_telebot import AsyncTeleBot
 from group import Group, groups
 from person import Person
 from dataclasses import dataclass
-from markups import markup_start1, markup_start, markup_game
+from markups import markup_start1, markup_start
 import messages
 
 @dataclass
@@ -36,22 +36,18 @@ class MyMiddleware(asyncio_handler_backends.BaseMiddleware):
 
     async def post_process_callback_query(self, call:types.CallbackQuery, data, exception):
         data = MiddlewareData(**data)
-        if len(data.group.players) >= 1 and data.group.check_ready():
-            await self.bot.edit_message_text(f'Игра начинается!\n\nУчастники:\n{data.group.get_users()}', call.message.chat.id, 
-                                            call.message.message_id, reply_markup=markup_game)
-            data.group.game_status = True
-            return asyncio_handler_backends.ContinueHandling()
 
         if len(data.group.players) < 1:
             await self.bot.edit_message_text(messages.start, call.message.chat.id,
                                             call.message.message_id, reply_markup=markup_start)
             return asyncio_handler_backends.ContinueHandling()
 
-        await self.bot.edit_message_text(
-            f"Участники:\n{data.group.get_users()}",
-            call.message.chat.id,
-            call.message.message_id,
-            reply_markup=markup_start1
-        )
-        
+        if not data.group.game_status:
+            await self.bot.edit_message_text(
+                f"Участники:\n{data.group.get_users()}",
+                call.message.chat.id,
+                call.message.message_id,
+                reply_markup=markup_start1
+            )
+
         return asyncio_handler_backends.ContinueHandling()

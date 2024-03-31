@@ -86,22 +86,11 @@ class Person():
             return 'Не може мати дітей'
 
 
-    def getPerson(self):
-        persona = """
-🚻Стать: {0}
-🎂Вік: {1}
-🔧Професія: {2}
-💟Стан здоров'я: {3}
-♿Інвалідність: {4}
-🚼Можливість мати дітей: {5}
-☀Характер: {6}
-🛐Релігія: {7}
-🙈Фобія: {8}
-⛳Хобі/вміння: {9}
-🎒Багаж: {11} 
-        """.format(self.sex, self.age, self.profession, self.illness,  self.kids, self.character,
-                   self.religion, self.phobia, self.skills, self.inventar)
-        return persona
+    def getPersonPhys(self):
+        return f"🚻Стать: {self.sex}\n🎂Вік: {self.age}\n♿Інвалідність: {self.illness}\n🚼Можливість мати дітей: {self.kids}\n🎒Багаж: {self.inventar}"
+    
+    def getPersonPersonally(self):
+        return f"🔧Професія: {self.profession}\n☀Характер: {self.character}\n🛐Релігія: {self.religion}\n🙈Фобія: {self.phobia}\n⛳Хобі/вміння: {self.skills}"
 
 
 
