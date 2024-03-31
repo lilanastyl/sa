@@ -7,10 +7,15 @@ class Group():
         self.game_status = False
         self.players: list[Person] = []
         self.bunker = Bunker()
+        self.message_taboo = False
     
     def choose_reset(self):
         for player in self.players:
             player.choose = False
+    
+    def votes_reset(self):
+        for player in self.players:
+            player.votes = 0
     
     def add_user(self, new_user: User):
         self.players.append(Person(new_user))
@@ -33,13 +38,14 @@ class Group():
     
     def get_user(self, id):
         for user in self.players:
-            if id == user.user_info.id:
+            if int(id) == user.user_info.id:
                 return user
         return False
 
-    def delete(self, user_new: User):
+    def delete(self, id):
         for user in self.players:
-            if user.user_info.id == user_new.id:
+            if user.user_info.id == id:
                 self.players.remove(user)
+                return user
 
 groups: dict[int, Group] = {}

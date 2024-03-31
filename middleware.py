@@ -20,7 +20,7 @@ class MyMiddleware(asyncio_handler_backends.BaseMiddleware):
     
     async def pre_process_callback_query(self, call: types.CallbackQuery, data: MiddlewareData):
         group = groups[call.message.chat.id]
-        user = group.get_user(call.from_user)
+        user = group.get_user(call.from_user.id)
 
         if call.data == 'join_group' and user:
             await self.bot.answer_callback_query(callback_query_id=call.id, text="Вы уже участвуете в игре!", show_alert=True)
@@ -33,6 +33,9 @@ class MyMiddleware(asyncio_handler_backends.BaseMiddleware):
         match = re.match(r'^user_(\d+)$', call.data)
         if match and user.choose:
             await self.bot.answer_callback_query(call.id, text="Вы уже проголосовали!", show_alert=True)
+            return asyncio_handler_backends.CancelUpdate()
+        if match and user.user_info.id == int(match.group(1)):
+            await self.bot.answer_callback_query(call.id, text="Нельзя голосовать против себя!", show_alert=True)
             return asyncio_handler_backends.CancelUpdate()
 
         data['group'] = group

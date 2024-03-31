@@ -6,12 +6,14 @@ from group import Group, groups
 from middleware import MyMiddleware, MiddlewareData
 from markups import markup_start, markup_game, create_keyboard
 import re
+from person import Person
 
 bot = AsyncTeleBot('6885805301:AAGcnYkpGfciC65TDPodn6k2nyRLS3NQKlY')
 
 @bot.message_handler(commands=['start'])
 async def start_message(message: types.Message):
     try:
+        # if not groups[message.chat.id] and not groups[message.chat.id].game_status:
         new_game = Group()
         groups[message.chat.id] = new_game
         await bot.send_message(message.chat.id, messages.start, reply_markup=markup_start)
@@ -26,23 +28,43 @@ async def start_message(message: types.Message):
     except Exception as error:
         print(error)
 
-async def start_game(data: MiddlewareData, chat_id):
-    while data.group.game_status:
-        t = 3 
-        while t:
-            m, s = divmod(t, 60)
-            timer = f'{m:02d} минут и {s:02d} секунд'
-            await bot.send_message(chat_id, f'У вас есть {timer} для выбора участника, который покинет игру. Таймер уже тикает!')
-            await asyncio.sleep(1)
-            t -= 1
-        await bot.send_message(chat_id, 'Время вышло, начнём голосование!', reply_markup=create_keyboard(data.group.players))
-        t = 3 
+async def vote_for_kick(data: MiddlewareData, chat_id, list: list[Person]):
+        await bot.send_message(chat_id, 'Начнём голосование!', reply_markup=create_keyboard(list))
+        t = 15
         while t:
             m, s = divmod(t, 60)
             timer = f'{m:02d} минут и {s:02d} секунд'
             await bot.send_message(chat_id, f'У вас есть {timer} для голосования.')
-            await asyncio.sleep(1)
-            t -= 1
+            await asyncio.sleep(5)
+            t -= 5
+        max_votes = max(player.votes for player in list)
+        users_with_max_votes = [player for player in list if player.votes == max_votes]
+        data.group.choose_reset()
+        data.group.votes_reset()
+        if len(users_with_max_votes) > 1:
+            await bot.send_message(chat_id, 'У нескольких игроков одинаковое количество голосов, нужно выбрать кого-то одного!')
+            return await vote_for_kick(chat_id, users_with_max_votes)
+        return users_with_max_votes[0].user_info.id
+
+async def start_game(data: MiddlewareData, chat_id):
+    while data.group.game_status:
+        t = 15
+        while t:
+            m, s = divmod(t, 60)
+            timer = f'{m:02d} минут и {s:02d} секунд'
+            await bot.send_message(chat_id, f'У вас есть {timer} для выбора участника, который покинет игру. Таймер уже тикает!')
+            await asyncio.sleep(5)
+            t -= 5
+        data.group.message_taboo = True
+        kicked_user = data.group.delete(await vote_for_kick(data, chat_id, data.group.players))
+        await bot.send_message(chat_id, f'Из игры был удалён @{kicked_user.user_info.username}.')
+        data.group.message_taboo = False
+        if len(data.group.players) < 3:
+            data.group.game_status = False
+            await bot.send_message(chat_id, f"Победители:\n{data.group.get_users()}")
+        else:
+            await bot.send_message(chat_id, f"Участники:\n{data.group.get_users()}")
+    
     
 
 @bot.callback_query_handler(func=lambda call: call.data)
@@ -61,7 +83,7 @@ async def choose_callback(call: types.CallbackQuery, data):
                 data.group.choose_reset()
                 await start_game(data, call.message.chat.id)
         if call.data == 'choose_exit':
-            data.group.delete(call.from_user)
+            data.group.delete(call.from_user.id)
         if call.data == 'physical_char':
             await bot.answer_callback_query(call.id, data.user.getPersonPhys(), True)
         if call.data == 'personally_char':
@@ -79,7 +101,7 @@ async def choose_callback(call: types.CallbackQuery, data):
 async def message_handler(message: types.Message):
     try:
         group = groups[message.chat.id]
-        if group.game_status and not group.get_user(message.from_user.id):
+        if (group.game_status and not group.get_user(message.from_user.id)) or group.message_taboo:
             await bot.delete_message(message.chat.id, message.message_id)
     except Exception as error:
         print(error)

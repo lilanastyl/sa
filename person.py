@@ -73,9 +73,6 @@ class Person():
         self.religion = random.choice(religion)
         self.inventar = random.choice(inventar)
 
-
-
-
     def setKids(self):
         if self.age <= 46:
             return random.choice(kids_d_46)
