@@ -61,6 +61,7 @@ class Person():
     def __init__(self, user):
         self.user_info: User = user
         self.choose = False
+        self.votes = 0
         self.sex = random.choice(sex)
         self.age = random.randint(17, 79)
         self.profession = random.choice(profession)

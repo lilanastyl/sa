@@ -5,6 +5,7 @@ from person import Person
 from dataclasses import dataclass
 from markups import markup_start1, markup_start
 import messages
+import re
 
 @dataclass
 class MiddlewareData():
@@ -27,6 +28,11 @@ class MyMiddleware(asyncio_handler_backends.BaseMiddleware):
 
         if not user and not call.data == 'join_group':
             await self.bot.answer_callback_query(call.id, text="Вы не участвуете в игре!", show_alert=True)
+            return asyncio_handler_backends.CancelUpdate()
+        
+        match = re.match(r'^user_(\d+)$', call.data)
+        if match and user.choose:
+            await self.bot.answer_callback_query(call.id, text="Вы уже проголосовали!", show_alert=True)
             return asyncio_handler_backends.CancelUpdate()
 
         data['group'] = group

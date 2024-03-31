@@ -8,6 +8,10 @@ class Group():
         self.players: list[Person] = []
         self.bunker = Bunker()
     
+    def choose_reset(self):
+        for player in self.players:
+            player.choose = False
+    
     def add_user(self, new_user: User):
         self.players.append(Person(new_user))
 
@@ -27,9 +31,9 @@ class Group():
                 return False
         return True
     
-    def get_user(self, searched_user: User):
+    def get_user(self, id):
         for user in self.players:
-            if searched_user.id == user.user_info.id:
+            if id == user.user_info.id:
                 return user
         return False
 
