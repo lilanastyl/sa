@@ -43,7 +43,7 @@ async def vote_for_kick(data: MiddlewareData, chat_id, list: list[Person]):
         data.group.votes_reset()
         if len(users_with_max_votes) > 1:
             await bot.send_message(chat_id, 'У нескольких игроков одинаковое количество голосов, нужно выбрать кого-то одного!')
-            return await vote_for_kick(chat_id, users_with_max_votes)
+            return await vote_for_kick(data, chat_id, users_with_max_votes)
         return users_with_max_votes[0].user_info.id
 
 async def start_game(data: MiddlewareData, chat_id):
